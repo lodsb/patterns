@@ -46,7 +46,9 @@ class P0[T](protected[pattern] var func: Context => T)
   }
 
   //binding
-  def ->[B <: BaseBinding](b: P0[B]) = Binding(b,this)
+  def bind(sym: Symbol, specMapping:(T => T) = {x: T => x}) = Binding(Pattern(() => sym),this, specMapping)
+  def bindSeq(syms: Seq[Symbol], specMappings:Seq[(T => T)] = Nil) = Binding(Pattern(() => syms),this, specMappings)
+
 
   //map
   def map[B](f: T=>B): P0[B] = {
@@ -292,26 +294,26 @@ object Pattern {
 
   def apply[T, U, V, W, X, Y, Z](func: Function7[Context,T, U, V, W, X, Y, Z]) = new P6W[T, U, V, W, X, Y, Z](func)
 
+  //def apply[T](v: T) = new P0((ctx:Context) => v)
 
   def apply[T](func: Function0[T]) =
-    new P0W[T]((ctx: Context) => func())
+    new P0[T]((ctx: Context) => func())
 
   def apply[T, U](func: Function1[T, U]) =
-    new P1W[T, U]((ctx: Context, x:T) => func(x))
+    new P1[T, U]((ctx: Context, x:T) => func(x))
 
   def apply[T, U, V](func: Function2[T, U, V]) =
-    new P2W[T, U, V]((ctx: Context, x:T, y: U) => func(x,y))
+    new P2[T, U, V]((ctx: Context, x:T, y: U) => func(x,y))
 
   def apply[T, U, V, W](func: Function3[T, U, V, W]) =
-    new P3W[T, U, V, W]((ctx: Context, x:T, y: U, z:V) => func(x,y,z))
+    new P3[T, U, V, W]((ctx: Context, x:T, y: U, z:V) => func(x,y,z))
 
   def apply[T, U, V, W, X](func: Function4[T, U, V, W, X]) =
-    new P4W[T, U, V, W, X]((ctx: Context, x:T, y: U,z:V, a:W) =>func(x,y,z,a))
+    new P4[T, U, V, W, X]((ctx: Context, x:T, y: U,z:V, a:W) =>func(x,y,z,a))
 
   def apply[T, U, V, W, X, Y](func: Function5[T, U, V, W, X, Y]) =
-    new P5W[T, U, V, W, X, Y]((ctx: Context, x:T, y: U,z:V, a:W,b:X) =>func(x,y,z,a,b))
-
+    new P5[T, U, V, W, X, Y]((ctx: Context, x:T, y: U,z:V, a:W,b:X) =>func(x,y,z,a,b))
 
   def apply[T, U, V, W, X, Y, Z](func: Function6[T, U, V, W, X, Y, Z]) =
-    new P6W[T, U, V, W, X, Y, Z]((ctx: Context, x:T, y: U,z:V, a:W,b:X,c:Y) =>func(x,y,z,a,b,c))
+    new P6[T, U, V, W, X, Y, Z]((ctx: Context, x:T, y: U,z:V, a:W,b:X,c:Y) =>func(x,y,z,a,b,c))
 }

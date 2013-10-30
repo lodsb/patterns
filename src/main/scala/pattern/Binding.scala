@@ -24,17 +24,45 @@ package pattern
 
 class BaseBinding
 
-case class SymbolBinding(symbol: Symbol) extends BaseBinding
+// identity mapped
+case class SymbolBinding[T](symbol: Symbol, value: T, specMapping: (T => T) = {x:T => x} ) extends BaseBinding
 
-trait Bindable[A] {
+trait Bindable {
   // TODO: set lower/upper bounds
-  def apply(a: A)
+  def dispatchBinding[T](a: SymbolBinding[T])
 }
 
-
+// TODO: FIX THIS according to symbol binding, also how to concatenate seq-bindings?
 object Binding {
-  def apply[B <: BaseBinding, V](binding: P0[B], value: P0[V]) : P0[Seq[(B,V)]] =
-    Pattern[Seq[(B, V)]]((ctx: Context) => Seq((binding(ctx) -> value(ctx))))
+
+  def apply[V](sym: P0[Symbol], value: P0[V], specMapping:(V => V) = {x: V => x}) : P0[Seq[SymbolBinding[V]]] = {
+    Pattern[Seq[SymbolBinding[V]]]( (ctx: Context) => Seq(SymbolBinding(sym(ctx), value(ctx), specMapping)))
+  }
+
+  def apply[V](syms: P0[Seq[Symbol]], value: P0[V], specMappings:Seq[(V => V)] = Nil) : P0[Seq[SymbolBinding[V]]] = {
+    if (specMappings.isEmpty) {
+      Pattern[Seq[SymbolBinding[V]]](
+          {
+            (ctx: Context) =>
+
+            val v = value(ctx)
+            val s = syms(ctx)
+            s.map {x => SymbolBinding(x,v)}
+          })
+    } else {
+      Pattern[Seq[SymbolBinding[V]]](
+      {
+        (ctx: Context) =>
+
+        val v = value(ctx)
+        val s = syms(ctx)
+
+         s.zip(specMappings).map {x=> SymbolBinding(x._1, v, x._2)}
+      })
+    }
+  }
+
+  /*
 
   //TODO: clear up naming .. map?
   def map[B <: BaseBinding, V](bindings: P0[Seq[B]], value: P0[V]) : P0[Seq[(B,V)]] =
@@ -55,5 +83,5 @@ object Binding {
     {
       (ctx: Context) => bindings(ctx).zip(value(ctx))
     }
-    )
+    )*/
 }

@@ -63,13 +63,14 @@ import clock.Clock
 
 // base class dafür! next ist abstract! rest nischt...
 
-abstract class BasePlayer[A](protected val pattern: P0[A],
-                             protected val bindable: Bindable[A],
+abstract class BasePlayer[T](protected val pattern: P0[Seq[SymbolBinding[T]]],
+                             protected val bindable: Bindable,
                              protected val clock: Clock) {
 
 
+  private val stopped = false
 
-  def kill() = {}
+  def stop() = {}
 
   def pause() = {}
 
@@ -77,21 +78,26 @@ abstract class BasePlayer[A](protected val pattern: P0[A],
     clock.schedulePlayer(this)
   }
 
-  def next() : Context = {
+  def next(): Context = {
     // will be modified by execution
+
+
     val ctx = Context(clock)
 
-    // execute chain
-    val bindValue = pattern(ctx)
-    // distribute
-    bindable(bindValue)
+    if (!stopped) {
+      // execute chain
+      val bindValue = pattern(ctx)
+      // distribute
+      bindValue.foreach(x => bindable.dispatchBinding(x))
+    } else {
+      ctx.invalidate
+    }
     ctx
   }
 }
 
-/*
-class Player[V](binding: P0[(Seq[(BaseBinding,V)])]) {
-  def next() = {
-  //take current head, run mapping, then schedule next
-  }
-}*/
+
+class Player[T](pattern: P0[Seq[SymbolBinding[T]]], bindable: Bindable, clock: Clock)
+  extends BasePlayer(pattern, bindable, clock) {
+
+}

@@ -147,7 +147,9 @@ class AppClock extends Clock {
 
           //schedule new set
           nextSet.foreach({ x =>
-            schedule(x._2, x._1.time.duration.toDouble)
+            if(!x._1.invalid) {
+              schedule(x._2, x._1.time.duration.toDouble)
+            }
           })
 
         } else {
