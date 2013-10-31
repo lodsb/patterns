@@ -63,12 +63,21 @@ import clock.Clock
 
 // base class dafür! next ist abstract! rest nischt...
 
-abstract class BasePlayer[T](protected val pattern: P0[Seq[SymbolBinding[T]]],
-                             protected val bindable: Bindable,
-                             protected val clock: Clock) {
 
+// get rid of generic type here?
+abstract class BasePlayer[T]{
+  def stop() : Unit
+  def pause(): Unit
+  def play() : Unit
+  def next() : Context
+}
+
+class Player[T](protected val pattern: P0[Seq[SymbolBinding[T]]],
+                             protected val bindable: Bindable,
+                             protected val clock: Clock) extends BasePlayer[T]{
 
   private val stopped = false
+  private var oldContext : Option[Context] = None
 
   def stop() = {}
 
@@ -81,8 +90,8 @@ abstract class BasePlayer[T](protected val pattern: P0[Seq[SymbolBinding[T]]],
   def next(): Context = {
     // will be modified by execution
 
-
-    val ctx = Context(clock)
+    // forward old states
+    val ctx = Context(clock, this, oldContext)
 
     if (!stopped) {
       // execute chain
@@ -92,12 +101,25 @@ abstract class BasePlayer[T](protected val pattern: P0[Seq[SymbolBinding[T]]],
     } else {
       ctx.invalidate
     }
+
+    oldContext = Some(ctx)
+
     ctx
   }
 }
 
-
+/*
 class Player[T](pattern: P0[Seq[SymbolBinding[T]]], bindable: Bindable, clock: Clock)
   extends BasePlayer(pattern, bindable, clock) {
 
 }
+*/
+
+class FakePlayer[T] extends BasePlayer[T]{
+  def stop() = {}
+  def pause()= {}
+  def play() = {}
+  def next() = {Context.defaultContext}
+}
+
+object FakePlayer extends FakePlayer[Object]

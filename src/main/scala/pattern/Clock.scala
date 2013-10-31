@@ -63,9 +63,6 @@ class AppClock extends Clock {
 
   private def nextBeat = 1-(_currentMusicalTime.toDouble % 1.0)
 
-  // SHOULD USE FIXED MUSICAL INCREMENT!!!  128th
-  // TODO: ticks to musicalTime
-
   private val runningThread = new Thread(new Runnable {
     def run() {
       while (running) {
@@ -112,9 +109,12 @@ class AppClock extends Clock {
       val s = scheduled.get(duration)
       if (!s.isEmpty) {
         var set = s.get
-        set = set + player
 
-        scheduled = scheduled + (duration -> set)
+        // dont permit double triggers
+        if (!set.contains(player)) {
+          set = set + player
+          scheduled = scheduled + (duration -> set)
+        }
 
       } else {
         scheduled = scheduled + (duration -> Set(player))

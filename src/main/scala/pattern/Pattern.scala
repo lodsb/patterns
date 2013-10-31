@@ -34,13 +34,12 @@ class P0[T](protected[pattern] var func: Context => T)
   protected val monitor = new Object()
 
   def apply() : T = {
-    monitor.synchronized {
-      func(getContext())
-    }
+      this.apply(getContext())
   }
 
   def apply(ctx:Context) : T = {
     monitor.synchronized {
+      ctx.setCurrentPattern(this)
       func(ctx)
     }
   }
@@ -69,13 +68,12 @@ class P1[T, U](protected[pattern] var func: Function2[Context, T, U])
   protected val monitor = new Object()
 
   def apply(x: T): U = {
-    monitor.synchronized {
-      func(getContext(),x)
-    }
+      this(getContext(),x)
   }
 
   def apply(ctx: Context,x: T): U = {
       monitor.synchronized {
+        ctx.setCurrentPattern(this)
         func(ctx,x)
       }
     }
@@ -103,13 +101,12 @@ class P2[T, U, V](protected[pattern] var func: Function3[Context, T, U, V])
   protected val monitor = new Object()
 
   def apply(x: T, y: U): V = {
-    monitor.synchronized {
-      func(getContext, x, y)
-    }
+      this(getContext, x, y)
   }
 
   def apply(ctx: Context, x: T, y: U): V = {
       monitor.synchronized {
+        ctx.setCurrentPattern(this)
         func(ctx, x, y)
       }
   }
@@ -137,13 +134,12 @@ class P3[T, U, V, W](protected[pattern] var func: Function4[Context, T, U, V, W]
   protected val monitor = new Object()
 
   def apply(x: T, y: U, z: V): W = {
-    monitor.synchronized {
-      func(getContext, x, y, z)
-    }
+      this(getContext, x, y, z)
   }
 
   def apply(ctx: Context, x: T, y: U, z: V): W = {
     monitor.synchronized {
+      ctx.setCurrentPattern(this)
       func(ctx, x, y, z)
     }
   }
@@ -170,13 +166,12 @@ class P4[T, U, V, W, X](protected[pattern] var func: Function5[Context, T, U, V,
   protected val monitor = new Object()
 
   def apply(x: T, y: U, z: V, a: W): X = {
-    monitor.synchronized {
-      func(getContext, x, y, z, a)
-    }
+      this(getContext, x, y, z, a)
   }
 
   def apply(ctx: Context, x: T, y: U, z: V, a: W): X = {
     monitor.synchronized {
+      ctx.setCurrentPattern(this)
       func(ctx, x, y, z, a)
     }
   }
@@ -203,13 +198,12 @@ class P5[T, U, V, W, X, Y](protected[pattern] var func: Function6[Context, T, U,
   protected val monitor = new Object()
 
   def apply(x: T, y: U, z: V, a: W, b: X): Y = {
-    monitor.synchronized {
-      func(getContext, x, y, z, a, b)
-    }
+      this(getContext, x, y, z, a, b)
   }
 
   def apply(ctx: Context, x: T, y: U, z: V, a: W, b: X): Y = {
     monitor.synchronized {
+      ctx.setCurrentPattern(this)
       func(ctx, x, y, z, a, b)
     }
   }
@@ -238,13 +232,12 @@ class P6[T, U, V, W, X, Y, Z](protected[pattern] var func: Function7[Context, T,
   protected val monitor = new Object()
 
   def apply(x: T, y: U, z: V, a: W, b: X, c: Y): Z = {
-    monitor.synchronized {
-      func(getContext(),x, y, z, a, b, c)
-    }
+      this(getContext(),x, y, z, a, b, c)
   }
 
   def apply(ctx: Context, x: T, y: U, z: V, a: W, b: X, c: Y): Z = {
     monitor.synchronized {
+      ctx.setCurrentPattern(this)
       func(ctx,x, y, z, a, b, c)
     }
   }

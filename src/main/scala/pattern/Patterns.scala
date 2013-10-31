@@ -81,3 +81,7 @@ object BrownNoise {
     Pattern(func)
   }
 }
+
+object SyncedLFO {
+  //waveform
+}
