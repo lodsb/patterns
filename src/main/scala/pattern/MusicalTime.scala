@@ -22,6 +22,10 @@ package pattern
     >>  Made in Bavaria by fat little elves - since 1983.
  */
 
+//FIXME: disgusting!!!
+
+//TODO: round to clock accuracy
+
 class MusicalTime(protected val rep: Double) extends Ordered[MusicalTime] {
   //def d256 = new MusicalTime(rep/256)
   def d128 = new MusicalTime(rep/128)
@@ -45,6 +49,13 @@ class MusicalTime(protected val rep: Double) extends Ordered[MusicalTime] {
 }
 
 class MusicalDuration(rep: Double) extends MusicalTime(rep) {
+  override def d128 = new MusicalDuration(rep/128)
+  override def d64 = new MusicalDuration(rep/64)
+  override def d32 = new MusicalDuration(rep/32)
+  override def d16 = new MusicalDuration(rep/16)
+  override def d8 = new MusicalDuration(rep/8)
+  override def d4 = new MusicalDuration(rep/4)
+  override def d2 = new MusicalDuration(rep/2)
   def stretch(factor: Double) = new MusicalDuration(factor*this.rep)
 }
 

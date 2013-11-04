@@ -29,6 +29,8 @@ trait BasePattern {
   }
 }
 
+// P*W patterns act as "proxy"!
+
 class P0[T](protected[pattern] var func: Context => T)
   extends (() => T) with BasePattern {
   protected val monitor = new Object()

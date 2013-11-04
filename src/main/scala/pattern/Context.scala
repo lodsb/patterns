@@ -28,6 +28,10 @@ import clock.{FakeClock, Clock}
 // pattern + player + thunk hashed?
 // okay.. every block gets its own dedicated state "space"
 
+// reversing local time? non monotonous time? -> guards have to be properly modified
+// need simple ops like inc for time etc, guarded, also running in reverse...
+// random everything whose state is dependant on time + deterministic
+
 case class PatternStateKey(hash: Long, name: String)
 
 case class PatternStateEntry[T](value: T)
@@ -129,8 +133,8 @@ class Context(val clock: Clock, val player: BasePlayer, val oldContext: Option[C
     def block(name: String) = new TimeBlock(this.name+"#HAHA#"+Context.hashCode()+"#HAHA#"+name,tbState)
 
     def during[T](mtime: MusicalDuration, name: String = "")(block: => T): Option[T] = {
-      val durTSt = "durationTime"+name
-      val timeUESt="timeOut"+name
+      val durTSt = "_durationTime"+name
+      val timeUESt="_timeOut"+name
 
       val durTime = state(this,durTSt, mtime)
 
@@ -153,13 +157,47 @@ class Context(val clock: Clock, val player: BasePlayer, val oldContext: Option[C
     }
 
     def in[T](mtime: MusicalDuration, name: String="")(block: => T): Option[T] = {
-      val d = during(mtime, "in_dur"+name){ true }
+      val d = during(mtime, "_in_dur"+name){ true }
 
       if (d.isEmpty) {
         Some(block)
       } else {
         None
       }
+    }
+
+    // increment depending on clock, decrements/stays the same if clock runs in reverse / pauses
+    def inc(mtime: MusicalDuration, name: String ="", wrapAt: Int=1) : Int = {
+      val cntrStr = "_inc_counter"+name
+      val lastTime= "_inc_last"+name
+
+      var counter = state(this,cntrStr, 0)
+
+      if (MusicalDuration.happensRepeatedly(time.currentMusicalTime, mtime, clock.accuracy)) {
+        val lastCheck = state(this, lastTime, time.currentMusicalTime)
+
+        if (lastCheck < time.currentMusicalTime) {
+          counter = counter + 1;
+        } else if (lastCheck > time.currentMusicalTime) {
+          counter = counter - 1;
+        }
+
+        if (wrapAt != 1) {
+          counter = counter % wrapAt
+        }
+
+        state.save(this, cntrStr, counter)
+        state.save(this, lastTime, time.currentMusicalTime)
+      }
+
+      tbUpdateTime(mtime)
+
+      counter
+    }
+
+    // same as above but decrement
+    def dec(mtime: MusicalDuration) : Int = {
+      0 - inc(mtime, "_dec")
     }
 
     private def tbUpdateTime(dur: MusicalTime) {
@@ -219,3 +257,4 @@ object Context {
   def apply(clock: Clock, player: Player[_], oldContext: Option[Context]) = new Context(clock, player, oldContext)
 
 }
+

@@ -57,10 +57,16 @@ object Binding {
         val v = value(ctx)
         val s = syms(ctx)
 
+        if (specMappings == Nil) {
+         s.map {x => SymbolBinding(x, v)}
+        } else {
          s.zip(specMappings).map {x=> SymbolBinding(x._1, v, x._2)}
+        }
       })
     }
   }
+
+  //TODO: apply for sequences of values
 
   /*
 
