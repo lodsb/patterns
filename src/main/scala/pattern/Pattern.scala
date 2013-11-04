@@ -27,6 +27,8 @@ trait BasePattern {
   def getContext() : Context = {
     Context.defaultContext
   }
+
+  // later for visualization/gui flags like usergenerated, so intermediate stuff can be filtered out
 }
 
 // P*W patterns act as "proxy"!

@@ -156,6 +156,8 @@ class Context(val clock: Clock, val player: BasePlayer, val oldContext: Option[C
       }
     }
 
+    // global time : @ , for
+
     def in[T](mtime: MusicalDuration, name: String="")(block: => T): Option[T] = {
       val d = during(mtime, "_in_dur"+name){ true }
 
