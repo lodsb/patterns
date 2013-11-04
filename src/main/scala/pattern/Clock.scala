@@ -32,14 +32,14 @@ abstract class Clock {
   def start() : Unit
   def kill() : Unit
   def pause() : Unit
-  def schedulePlayer(player: BasePlayer[_]) : Unit
+  def schedulePlayer(player: BasePlayer) : Unit
 
 
 }
 
 class AppClock extends Clock {
 
-  private var scheduled = Map[Double, Set[BasePlayer[_]]]()
+  private var scheduled = Map[Double, Set[BasePlayer]]()
   private val monitor = new Object
 
   private var bpm = 120f
@@ -97,12 +97,12 @@ class AppClock extends Clock {
 
   //TODO: something to synchronize clocks, reset?
 
-  override def schedulePlayer(player: BasePlayer[_]) {
+  override def schedulePlayer(player: BasePlayer) {
     // TODO: schedule on next beat
     this.schedule(player, nextBeat)
   }
 
-  private def schedule(player: BasePlayer[_], duration: Double) = {
+  private def schedule(player: BasePlayer, duration: Double) = {
 
     monitor.synchronized {
 
@@ -172,7 +172,7 @@ class FakeClock extends Clock{
 
   def pause() {}
 
-  def schedulePlayer(player: BasePlayer[_]) {}
+  def schedulePlayer(player: BasePlayer) {}
 }
 
 object FakeClock extends FakeClock

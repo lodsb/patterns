@@ -65,7 +65,7 @@ import clock.Clock
 
 
 // get rid of generic type here?
-abstract class BasePlayer[T]{
+abstract class BasePlayer{
   def stop() : Unit
   def pause(): Unit
   def play() : Unit
@@ -74,16 +74,19 @@ abstract class BasePlayer[T]{
 
 class Player[T](protected val pattern: P0[Seq[SymbolBinding[T]]],
                              protected val bindable: Bindable,
-                             protected val clock: Clock) extends BasePlayer[T]{
+                             protected val clock: Clock) extends BasePlayer{
 
-  private val stopped = false
+  private var stopped = false
   private var oldContext : Option[Context] = None
 
-  def stop() = {}
+  def stop() = {
+    stopped = true
+  }
 
   def pause() = {}
 
   def play() = {
+    stopped = false
     clock.schedulePlayer(this)
   }
 
@@ -115,7 +118,7 @@ class Player[T](pattern: P0[Seq[SymbolBinding[T]]], bindable: Bindable, clock: C
 }
 */
 
-class FakePlayer[T] extends BasePlayer[T]{
+class FakePlayer[T] extends BasePlayer{
   def stop() = {}
   def pause()= {}
   def play() = {}

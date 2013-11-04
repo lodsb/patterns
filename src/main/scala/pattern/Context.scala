@@ -28,13 +28,14 @@ import clock.{FakeClock, Clock}
 // pattern + player + thunk hashed?
 // okay.. every block gets its own dedicated state "space"
 
-class Context(val clock: Clock, val player: BasePlayer[_], val oldContext: Option[Context] = None) {
+case class PatternStateKey(hash: Long, name: String)
 
-  case class PatternStateKey(hash: Long, name: String)
+case class PatternStateEntry[T](value: T)
 
-  case class PatternStateEntry[T](value: T)
+class Context(val clock: Clock, val player: BasePlayer, val oldContext: Option[Context] = None) {
 
-  type StateMap = Map[PatternStateKey, PatternStateEntry[_]]
+
+  //type StateMap = Map[PatternStateKey, PatternStateEntry[_]]
 
   protected case class ContextState(stretchFactor: Double = 1.0)
 
@@ -59,7 +60,7 @@ class Context(val clock: Clock, val player: BasePlayer[_], val oldContext: Optio
     currentPattern = Some(pattern)
   }
 
-  class PatternState(oldState: Option[StateMap] = None) {
+  class PatternState(oldState: Option[Map[PatternStateKey, PatternStateEntry[_]]] = None) {
 
     var stateMap = oldState.getOrElse(Map[PatternStateKey, PatternStateEntry[_]]())
 
@@ -104,7 +105,7 @@ class Context(val clock: Clock, val player: BasePlayer[_], val oldContext: Optio
     }
   }
 
-  var oldContexState: Option[StateMap] = None
+  var oldContexState: Option[Map[PatternStateKey, PatternStateEntry[_]]] = None
   if (oldContext.isDefined) {
     oldContexState = Some(oldContext.get.state.stateMap)
   }
