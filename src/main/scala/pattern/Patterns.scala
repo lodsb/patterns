@@ -1,6 +1,8 @@
 package pattern
 import util.Random
 
+import Implicits._
+
 /*
   +1>>  This source code is licensed as GPLv3 if not stated otherwise.
     >>  NO responsibility taken for ANY harm, damage done
@@ -92,24 +94,33 @@ object BrownNoise {
 object SyncedLFO {
   //speed, waveform (sin, ramp, triangle, square, noise?) , phase
   // phase between 0, 1
-  private val steps = 64 // TODO: Should be adaptive, always smooth
+  private val steps = 128 // TODO: Should be adaptive, always smooth
+  private val duration = MusicalDuration(1).d128
 
   object Waveform extends Enumeration {
     val Saw = Value("SAW")
     val Square = Value("SQR")
     val Sine = Value("SIN")
     val Triangle = Value("TRI")
+    val RandomSH = Value("TRI")
   }
 
   def generator(ctx: Context, speed: MusicalDuration, phase: Double, waveform: Waveform.Value) : Double = {
-    // unit phase
-    val incFactor = (1.0/steps)
-    val phasor : Double= ( ctx.time.block("phase").inc(speed.stretch(incFactor), wrapAt = steps) ) * incFactor
+    val timeFactor = duration.toDouble/speed.toDouble
 
-    val currentPhase = ( phasor+(steps.toDouble/phase) ) % 1.0
+    //fixed speed phasor
+    //unit phase
+    val phasor : Double= ( ctx.time.block("phase").inc(duration, wrapAt = steps) ) / steps.toDouble
+
+    // update current phase
+    var currentPhase : Double = ctx.state("currentPhase", 0.0)
+    currentPhase = (currentPhase + timeFactor) % 1.0
+    ctx.state.save("currentPhase", currentPhase)
+
+    currentPhase = currentPhase + phase
 
     val ret = waveform match {
-        case Waveform.Saw => currentPhase
+        case Waveform.Saw => 1-currentPhase
 
         case Waveform.Square => {
             if (currentPhase >= 0.5)
@@ -117,19 +128,46 @@ object SyncedLFO {
             else
               0.0
         }
-        case Waveform.Triangle => 123.0
+        case Waveform.Triangle => {
+          if (currentPhase >= 0.5) {
+            1-(2*currentPhase)
+          } else {
+            2*currentPhase
+          }
+        }
+
+        case Waveform.RandomSH => {
+          // created only if needed... kinda disgusting
+          val random: Random = ctx.state("randomGenerator", new Random())
+          val oldPhaseDirection: Double = ctx.state("phaseDirection", math.signum(currentPhase))
+          val oldRandomValue: Double = ctx.state("oldRandomValue", 0)
+
+          val phaseDirection = math.signum(currentPhase)
+
+          val randomValue = if (phaseDirection != oldPhaseDirection) {
+            random.nextDouble()
+          } else {
+            oldRandomValue
+          }
+
+          ctx.state.save("oldRandomValue", randomValue)
+          ctx.state.save("oldPhaseDirection", phaseDirection)
+          ctx.state.save("randomGenerator", random)
+
+
+          randomValue
+        }
 
         case Waveform.Sine => scala.math.sin( currentPhase * 2 * scala.math.Pi )
 
         case _ => 0.0
     }
 
-
-
-
-    0.1
+    ret
 
   }
+
+  def apply() = Pattern(generator _)
 }
 
 // deterministic random in time?

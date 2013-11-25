@@ -240,7 +240,8 @@ class Context(val clock: Clock, val player: BasePlayer, val oldContext: Option[C
     }
 
     // global minimum for updates
-    protected[Context] def updateDuration(dur: MusicalTime) = {
+    //FIXME: correct visibility
+    /*protected[Contect]*/ def updateDuration(dur: MusicalTime) = {
       val currentDuration = MusicalDuration(currentState.stretchFactor * dur.toDouble)
       this.duration = MusicalDuration.min(this.duration, currentDuration)
     }

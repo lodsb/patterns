@@ -38,9 +38,11 @@ class MusicalTime(protected val rep: Double) extends Ordered[MusicalTime] {
 
   def + (that: MusicalTime) = new MusicalTime(this.rep + that.rep)
   def - (that: MusicalTime) = new MusicalTime(this.rep - that.rep)
-  def compare(that: MusicalTime): Int = math.signum(that.rep - this.rep).toInt
+  def compare(that: MusicalTime): Int = this.rep.compareTo(that.rep)
 
   def toDouble = rep
+
+  override def toString: String = "MusicalTime: "+rep.toString
 
     // ??
   //def toTicks

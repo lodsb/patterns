@@ -66,7 +66,7 @@ class Environment extends Bindable {
     }
   }
 
-  def player[T](pattern: P0[Seq[SymbolBinding[T]]], scheduleAt: MusicalDuration) : Player[T] = {
+  def player[T](pattern: P0[Seq[SymbolBinding[T]]]) : Player[T] = {
     val ret = new Player(pattern, this, clock)
 
     ret

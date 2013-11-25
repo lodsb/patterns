@@ -72,7 +72,7 @@ class AppClock extends Clock {
 
           clock(accuracy.toDouble)
         } catch {
-          case _ : Throwable => running = false
+          case e : Throwable => e.printStackTrace//running = false
         }
       }
     }
@@ -130,7 +130,7 @@ class AppClock extends Clock {
     })
 
     var done = false
-    while (!done) {
+    while (!done && !scheduled.isEmpty) {
       monitor.synchronized {
         val currentMin = scheduled.minBy(_._1)
 
