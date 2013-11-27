@@ -44,7 +44,7 @@ trait Generating[ContainerType, DataType] extends Enumerator[DataType] {
 }
 
 abstract class Interpolating[DataType, ReturnType] {
-  def iteratee(): Iteratee[DataType, ReturnType]
+  def iteratee(): Iteratee[DataType, Option[ReturnType]]
 }
    /*
 abstract class Interpolating[DataType, ReturnType] {
@@ -93,7 +93,10 @@ class Sequence[Input,Intermediate,Ret](interpolating: Interpolating[Intermediate
 
 
       ret match {
-        case Done(result, _) => Some(result)
+        case Done(result, _) => result match {
+          case Some(s) => Some(s)
+          case _ => None
+        }
         // Something went wrong
         case _ => None
       }
@@ -103,16 +106,39 @@ class Sequence[Input,Intermediate,Ret](interpolating: Interpolating[Intermediate
 // implementations interpolation
 
 class NoInterpolation[A] extends Interpolating[A,A] {
-  def iteratee(): Iteratee[A, A] = {
-    def step(in: Input[A]) : Iteratee[A, A]= {
+  def iteratee(): Iteratee[A, Option[A]] = {
+    def step(in: Input[A]) : Iteratee[A, Option[A]]= {
       in match {
-        case EOF => Done(null.asInstanceOf[A], EOF)
+        case EOF => Done(None, EOF)
         case Empty=> Cont(step)
-        case Element(x) => Done(x, Empty)
+        case Element(x) => Done(Some(x), Empty)
       }
     }
 
     Cont(step)
+  }
+}
+
+class Mean[A <% Float](numberOfValues: Int) extends Interpolating[A,A] {
+  def iteratee(): Iteratee[A, Option[A]] = {
+    def step(akk: Int, sum: A)(in: Input[A]) : Iteratee[A, Option[A]]= {
+      in match {
+        case EOF => Done(None, EOF)
+        case Empty=> Cont(step(akk, sum))
+        case Element(x) => { if (akk == 0) {
+                              Done(Some((x.toFloat+sum)/numberOfValues), Empty)
+                          } else {
+                              Cont(step(akk-1, sum+x))
+                          }
+        }
+      }
+    }
+
+    if (numberOfValues == 0) {
+      Done(None, EOF)
+    } else {
+      Cont(step(numberOfValues, 0f))
+    }
   }
 }
 
