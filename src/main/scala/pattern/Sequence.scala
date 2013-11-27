@@ -1,4 +1,12 @@
+import javax.swing.plaf.metal.MetalBorders.OptionDialogBorder
 import pattern._
+import scala.Some
+import pattern.util._
+import pattern.util.Done
+import scala.Some
+import util.Cont
+import util.Done
+import util.Element
 
 /*
   +1>>  This source code is licensed as GPLv3 if not stated otherwise.
@@ -23,20 +31,29 @@ import pattern._
  */
 
 
+/*
 abstract class Generating[ContainerType, DataType] {
   // takes a container, generates a value from it, None if finished
   def generate(container: ContainerType): Option[DataType]
 
   def reset()
+}*/
+
+trait Generating[ContainerType, DataType] extends Enumerator[DataType] {
+  def reset
 }
 
+abstract class Interpolating[DataType, ReturnType] {
+  def iteratee(): Iteratee[DataType, ReturnType]
+}
+   /*
 abstract class Interpolating[DataType, ReturnType] {
   def needASample(): Boolean
 
   def feedSample(sample: Option[DataType])
 
   def interpolate(): Option[ReturnType]
-}
+}    */
 
 // using composition, so they can changed at runtime
 class Sequence[Input,Intermediate,Ret](interpolating: Interpolating[Intermediate,Ret],
@@ -67,36 +84,39 @@ class Sequence[Input,Intermediate,Ret](interpolating: Interpolating[Intermediate
   // overwrite initial function
   this.func = ({
     (ctx: Context, x: Input) =>
-      while (interpolator().needASample()) {
-        interpolator().feedSample(generator().generate(x))
-      }
 
-      interpolator().interpolate()
+
+      val int = interpolator().iteratee()
+      val gen = generator()
+
+      val ret = gen.enum(int)
+
+
+      ret match {
+        case Done(result, _) => Some(result)
+        // Something went wrong
+        case _ => None
+      }
   })
 }
 
 // implementations interpolation
 
 class NoInterpolation[A] extends Interpolating[A,A] {
-  private var sampleNeeded = true
-  private var currentSample: Option[A] = None
+  def iteratee(): Iteratee[A, A] = {
+    def step(in: Input[A]) : Iteratee[A, A]= {
+      in match {
+        case EOF => Done(null.asInstanceOf[A], EOF)
+        case Empty=> Cont(step)
+        case Element(x) => Done(x, Empty)
+      }
+    }
 
-  def needASample(): Boolean = {
-    val ret = sampleNeeded
-    sampleNeeded = sampleNeeded ^ true
-
-    ret
-  }
-
-  def feedSample(sample: Option[A]) = {
-    currentSample = sample
-  }
-
-  def interpolate(): Option[A] = {
-    currentSample
+    Cont(step)
   }
 }
 
+// interpolate ops für versch. datentypen
 /* TODO LERP ETC stretchfactor < 1, drop samples + interpol; > 1 interpolate
 intermediate ist float, der rest kann  alles andere sein
 class LinearInterpolation[T <% Float](stretchFactor: P0[Float]) extends Interpolating[(T,T),T] {
@@ -131,25 +151,52 @@ class LinearInterpolation[T <% Float](stretchFactor: P0[Float]) extends Interpol
 //TODO: Sample & Hold
 
 // implementations generator
-class Repetition[A](repetitions: P0[Int]) extends Generating[P0[A], A] {
+
+class Repetition[A](container: P0[A], repetitions: P0[Int]) extends Generating[P0[A], A] {
   private var counter = 0;
   private var reps = 0;
 
-  def generate(container: P0[A]): Option[A] = {
-    val currentRepetitions = repetitions();
-    if (reps != currentRepetitions) { reps = currentRepetitions; counter = 0;}
+  private var currentValue : Option[A] = None
 
-    if (counter < currentRepetitions) {
-      counter = counter + 1;
-        Some(container())
-    } else {
-        reset(); None
+  def generate(): A = {
+    val currentRepetitions = repetitions();
+
+    if (reps != currentRepetitions) {
+      reps = currentRepetitions;
+
+      reset();
     }
 
+    if (counter <= currentRepetitions) {
+      counter = counter + 1;
+    } else {
+        reset();
+    }
+
+    if (currentValue.isEmpty) {
+      currentValue = Some(container())
+    }
+
+    currentValue.get
   }
 
   def reset() {
     counter = 0;
+    currentValue = None
+  }
+
+  def enum[Out](iter: Iteratee[A, Out]): Iteratee[A, Out] = {
+    val feed = generate()
+
+    def step(i: Iteratee[A, Out]) : Iteratee[A, Out] = {
+      iter match {
+        case Done(_,_) => iter
+        case c@Cont(_) => step(c(Element(feed)))
+      }
+    }
+
+    step(iter)
   }
 }
+
 
