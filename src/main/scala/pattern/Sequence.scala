@@ -56,8 +56,8 @@ abstract class Interpolating[DataType, ReturnType] {
 }    */
 
 // using composition, so they can changed at runtime
-class Sequence[Input,Intermediate,Ret](interpolating: Interpolating[Intermediate,Ret],
-                     generating: Generating[Input, Intermediate])
+class Sequence[Input,Intermediate,Ret](generating: Generating[Input, Intermediate],
+                                       interpolating: Interpolating[Intermediate,Ret])
   extends P1[Input, Option[Ret]]({
     (ctx: Context, x: Input) => None
   }) {
@@ -200,8 +200,55 @@ class Repetition[A](container: P0[A], repetitions: P0[Int]) extends Generating[P
 }
 
 class WrappedSequence[A](seq: P0[Seq[A]], deviation: P0[Int]) extends Generating[P0[A], A] {
-  def reset {}
+  private var currentIndex = 0;
 
-  def enum[Out](iter: Iteratee[A, Out]): Iteratee[A, Out] = ???
+  def reset {
+    currentIndex = 0
+  }
+
+  def enum[Out](iter: Iteratee[A, Out]): Iteratee[A, Out] = {
+    val currentSequence = seq()
+
+    def step(i: Iteratee[A, Out]) : Iteratee[A, Out] = {
+      iter match {
+        case Done(_,_) => iter
+        case c@Cont(_) => {
+          val dev = deviation()
+
+          val seqSize = currentSequence.size-1
+          var index = currentIndex % seqSize
+
+          if (index < 0) {
+            index = seqSize + currentIndex
+          }
+
+          val elem = currentSequence(currentIndex % (currentSequence.size-1))
+
+          currentIndex = currentIndex + dev
+
+          step(c(Element(elem)))
+        }
+
+      }
+    }
+
+    step(iter)
+  }
 }
+
+
+/** *
+  * companion object containing
+  * convenience functions for quick instantiation
+  */
+object Sequence {
+  def apply[T](pseq: P0[Seq[T]]) : Sequence[Seq[T],T,T] = {
+    import Implicits._
+    import Pattern._
+    val deviator = Pattern(1)
+
+    new Sequence(new WrappedSequence[T](pseq, deviator), new NoInterpolation[T])
+  }
+}
+
 

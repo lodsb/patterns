@@ -25,6 +25,7 @@ import Implicits._
     >>  Made in Bavaria by fat little elves - since 1983.
  */
 
+/*
 object WhiteNoise {
   def generator(lo: Double, hi: Double, rnd: Random): Double = {
     var low = lo
@@ -169,5 +170,6 @@ object SyncedLFO {
 
   def apply() = Pattern(generator _)
 }
+*/
 
 // deterministic random in time?
