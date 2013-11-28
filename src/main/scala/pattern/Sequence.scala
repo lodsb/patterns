@@ -121,14 +121,15 @@ class NoInterpolation[A] extends Interpolating[A,A] {
 
 class Mean[A <% Float](numberOfValues: Int) extends Interpolating[A,A] {
   def iteratee(): Iteratee[A, Option[A]] = {
-    def step(akk: Int, sum: A)(in: Input[A]) : Iteratee[A, Option[A]]= {
+    def step(akk: Int, sum: Float)(in: Input[A]) : Iteratee[A, Option[A]]= {
       in match {
         case EOF => Done(None, EOF)
         case Empty=> Cont(step(akk, sum))
         case Element(x) => { if (akk == 0) {
-                              Done(Some((x.toFloat+sum)/numberOfValues), Empty)
+                              // arggglll
+                              Done(Some((x+sum)/numberOfValues).asInstanceOf[Option[A]], Empty)
                           } else {
-                              Cont(step(akk-1, sum+x))
+                              Cont(step(akk-1, x+sum))
                           }
         }
       }
@@ -142,39 +143,12 @@ class Mean[A <% Float](numberOfValues: Int) extends Interpolating[A,A] {
   }
 }
 
-// interpolate ops für versch. datentypen
-/* TODO LERP ETC stretchfactor < 1, drop samples + interpol; > 1 interpolate
-intermediate ist float, der rest kann  alles andere sein
-class LinearInterpolation[T <% Float](stretchFactor: P0[Float]) extends Interpolating[(T,T),T] {
-  private var sampleNeeded = true
-  private var currentSample: Option[(T,T)] = None
-  private var currentStretchFactor: Option[Float] = None
+// TODO LERP ETC stretchfactor < 1, drop samples + interpol; > 1 interpolate
 
 
-  def needASample(): Boolean = {
-    val ret = sampleNeeded
-    sampleNeeded = sampleNeeded ^ true
-
-    ret
-  }
-
-  def feedSample(sample: Option[(T,T)]) = {
-    currentSample = sample
-  }
-
-  def interpolate(): Option[Float] = {
-    if (!currentSample.isEmpty) {
-      val x: T = currentSample.get._1
-      val y: T = currentSample.get._2
-       Some((x+y)/2f)
-    } else {
-      None
-    }
-  }
-}
-*/
 
 //TODO: Sample & Hold
+
 
 // implementations generator
 
@@ -225,4 +199,9 @@ class Repetition[A](container: P0[A], repetitions: P0[Int]) extends Generating[P
   }
 }
 
+class WrappedSequence[A](seq: P0[Seq[A]], deviation: P0[Int]) extends Generating[P0[A], A] {
+  def reset {}
+
+  def enum[Out](iter: Iteratee[A, Out]): Iteratee[A, Out] = ???
+}
 

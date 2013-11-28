@@ -1,5 +1,5 @@
 package pattern
-import util.Random
+import scala.util.Random
 
 import Implicits._
 

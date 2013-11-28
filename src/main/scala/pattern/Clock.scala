@@ -37,32 +37,31 @@ abstract class Clock {
 
 }
 
-class AppClock extends Clock {
+abstract class BaseClock extends Clock {
 
-  private var scheduled = Map[Double, Set[BasePlayer]]()
-  private val monitor = new Object
+  protected var scheduled = Map[Double, Set[BasePlayer]]()
+  protected val monitor = new Object
 
-  private var bpm = 120f
+  protected var bpm = 120f
 
-  private def clockTempoDurationMillis: Long = (bpm2Millis(bpm)*accuracy.toDouble).toLong
+  protected def clockTempoDurationMillis: Long = (bpm2Millis(bpm)*accuracy.toDouble).toLong
 
   protected def bpm2Millis(bpm: Float): Float = {
     60000.0f / bpm
   }
 
-  private var running = false;
-
   def accuracy = MusicalDuration(1).d128 // == clock resolution
 
   def defaultMusicalDuration = MusicalDuration(0.5)
 
-  private var _currentMusicalTime = new MusicalTime(1)
+  protected var _currentMusicalTime = new MusicalTime(1)
 
   // logical time
   def currentMusicalTime = _currentMusicalTime
 
   private def nextBeat = 1-(_currentMusicalTime.toDouble % 1.0)
 
+  /*
   private val runningThread = new Thread(new Runnable {
     def run() {
       while (running) {
@@ -94,6 +93,7 @@ class AppClock extends Clock {
     running = false
     runningThread.interrupt()
   }
+  */
 
   //TODO: something to synchronize clocks, reset?
 
@@ -102,7 +102,7 @@ class AppClock extends Clock {
     this.schedule(player, nextBeat)
   }
 
-  private def schedule(player: BasePlayer, duration: Double) = {
+  protected def schedule(player: BasePlayer, duration: Double) = {
 
     monitor.synchronized {
 
@@ -124,7 +124,7 @@ class AppClock extends Clock {
 
   }
 
-  private def clock(passedTime: Double) = {
+  protected def clock(passedTime: Double) = {
     scheduled = scheduled.map({
       x => (x._1 - passedTime, x._2)
     })
@@ -158,6 +158,59 @@ class AppClock extends Clock {
       }
     }
 
+  }
+}
+
+//TODO fix this mess
+class RTClock extends BaseClock {
+
+  private var running = false;
+
+  private val runningThread = new Thread(new Runnable {
+    def run() {
+      while (running) {
+        try {
+          Thread.sleep(clockTempoDurationMillis)
+          _currentMusicalTime = _currentMusicalTime + accuracy
+
+          clock(accuracy.toDouble)
+        } catch {
+          case e : Throwable => e.printStackTrace//running = false
+        }
+      }
+    }
+  })
+
+  override def start() = {
+    running = true
+    runningThread.start()
+  }
+
+  override def kill() = {
+    pause()
+    monitor.synchronized {
+      scheduled = Map()
+    }
+  }
+
+  override def pause() = {
+    running = false
+    runningThread.interrupt()
+  }
+}
+
+class NRTClock extends BaseClock {
+  def start() {}
+
+  def kill() {}
+
+  def pause() {}
+
+  def render(start: MusicalTime, end: MusicalTime) = {
+    _currentMusicalTime = start
+    while(_currentMusicalTime <= end) {
+      _currentMusicalTime + accuracy
+    }
   }
 }
 

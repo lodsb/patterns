@@ -1,6 +1,6 @@
 package pattern
 
-import clock.{AppClock, Clock}
+import clock.{NRTClock, RTClock, Clock}
 
 /*
   +1>>  This source code is licensed as GPLv3 if not stated otherwise.
@@ -29,7 +29,7 @@ case class PVal[T](value: T)
 class Environment extends Bindable {
   private val monitor = new Object
 
-  val clock = new AppClock
+  val clock = new RTClock
 
   clock.start()
 
@@ -71,4 +71,14 @@ class Environment extends Bindable {
 
     ret
   }
+
+  def render[T](pattern: P0[Seq[SymbolBinding[T]]], start: MusicalTime, end: MusicalTime) = {
+    val clk = new NRTClock
+
+    val plyr = new Player(pattern, this, clk)
+    plyr.play()
+    clk.render(start,end)
+
+  }
+
 }
