@@ -1,7 +1,6 @@
-package pattern.reakt
+package pattern.combination
 
-import pattern.{Context, P0}
-import org.lodsb.reakt.async._
+import pattern.{Context, P2, P0}
 
 /*
   +1>>  This source code is licensed as GPLv3 if not stated otherwise.
@@ -25,24 +24,12 @@ import org.lodsb.reakt.async._
     >>  Made in Bavaria by fat little elves - since 1983.
  */
 
+class JoinSequences {
+  def apply[T]() : P2[Seq[T],Seq[T],Seq[T]]= {
+    val func = (ctx: Context, s1: Seq[T], s2: Seq[T]) => {
+      s1++s2
+    }
 
-// i guess for most use-cases signaling is used at the end of the chain,
-// therefore using binding
-
-class SignalPattern[T](f: Context => T) extends P0[T](f) {
-  // source for trouble??
-  val signal = new ValA[T](this.apply())
-
-  override def apply(ctx: Context) : T = {
-    val ret = super.apply(ctx)
-    signal.emit(ret)
-
-    ret
-  }
-}
-
-object SignalPattern {
-  def apply[T](p: P0[T]) : SignalPattern[T]= {
-    new SignalPattern[T](p.func)
+    new P2(func)
   }
 }
