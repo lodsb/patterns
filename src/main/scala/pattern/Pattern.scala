@@ -28,7 +28,12 @@ trait BasePattern {
     Context.defaultContext
   }
 
-  // later for visualization/gui flags like usergenerated, so intermediate stuff can be filtered out
+  // later for visualization/gui flags like ~usergenerated, so intermediate stuff can be filtered out
+}
+
+// used for all pattern classes to combine function parameters
+trait Composable[In, Out] {
+  def °(in: In): Out
 }
 
 // P*W patterns act as "proxy"!
@@ -67,24 +72,28 @@ class P0W[T](myFunc: Context => T) extends P0[T](myFunc) {
   }
 }
 
-class P1[T, U](protected[pattern] var func: Function2[Context, T, U])
+// used by classes such as sequence to offer a special composition impl
+abstract class P1NonComposable[T, U](protected[pattern] var func: Function2[Context, T, U])
   extends Function1[T, U] with BasePattern {
   protected val monitor = new Object()
 
   def apply(x: T): U = {
-      this(getContext(),x)
+    this(getContext(),x)
   }
 
   def apply(ctx: Context,x: T): U = {
-      monitor.synchronized {
-        ctx.setCurrentPattern(this)
-        func(ctx,x)
-      }
+    monitor.synchronized {
+      ctx.setCurrentPattern(this)
+      func(ctx,x)
     }
+  }
 
   //map
   def map[B](f: U=>B): P1[T,B] = {new P1[T,B]((ctx: Context, x:T) => f(this.apply(ctx, x)))}
+}
 
+class P1[T, U](f: Function2[Context, T, U])
+  extends P1NonComposable[T,U](f) with Composable[P0[T], P0[U]]{
   //composition
   def °(p: P0[T]) : P0[U] = {
 
@@ -101,7 +110,7 @@ class P1W[T,U](myFunc: Function2[Context,T, U]) extends P1(myFunc) {
 }
 
 class P2[T, U, V](protected[pattern] var func: Function3[Context, T, U, V])
-  extends Function2[T, U, V] with BasePattern {
+  extends Function2[T, U, V] with BasePattern with Composable[P0[T],  P1[U,V]]{
   protected val monitor = new Object()
 
   def apply(x: T, y: U): V = {
@@ -133,7 +142,7 @@ class P2W[T, U, V](myFunc: Function3[Context,T, U, V]) extends P2[T,U,V](myFunc)
 
 
 class P3[T, U, V, W](protected[pattern] var func: Function4[Context, T, U, V, W])
-  extends Function3[T, U, V, W] with BasePattern {
+  extends Function3[T, U, V, W] with BasePattern with Composable[P0[T],  P2[U,V,W]]{
 
   protected val monitor = new Object()
 
@@ -166,7 +175,7 @@ class P3W[T, U, V, W](myFunc: Function4[Context,T, U, V, W]) extends P3[T, U, V,
 }
 
 class P4[T, U, V, W, X](protected[pattern] var func: Function5[Context, T, U, V, W, X])
-  extends Function4[T, U, V, W, X] with BasePattern {
+  extends Function4[T, U, V, W, X] with BasePattern with Composable[P0[T],  P3[U,V,W,X]]{
   protected val monitor = new Object()
 
   def apply(x: T, y: U, z: V, a: W): X = {
@@ -198,7 +207,7 @@ class P4W[T, U, V, W, X](myFunc: Function5[Context,T, U, V, W, X]) extends P4[T,
 }
 
 class P5[T, U, V, W, X, Y](protected[pattern] var func: Function6[Context, T, U, V, W, X, Y])
-  extends Function5[T, U, V, W, X, Y] with BasePattern {
+  extends Function5[T, U, V, W, X, Y] with BasePattern  with Composable[P0[T],  P4[U,V,W,X,Y]]{
   protected val monitor = new Object()
 
   def apply(x: T, y: U, z: V, a: W, b: X): Y = {
@@ -232,7 +241,7 @@ class P5W[T, U, V, W, X, Y](myFunc: Function6[Context,T, U, V, W, X, Y])
 }
 
 class P6[T, U, V, W, X, Y, Z](protected[pattern] var func: Function7[Context, T, U, V, W, X, Y, Z])
-  extends Function6[T, U, V, W, X, Y, Z] with BasePattern {
+  extends Function6[T, U, V, W, X, Y, Z] with BasePattern  with Composable[P0[T],  P5[U,V,W,X,Y,Z]]{
   protected val monitor = new Object()
 
   def apply(x: T, y: U, z: V, a: W, b: X, c: Y): Z = {

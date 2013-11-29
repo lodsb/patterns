@@ -56,11 +56,33 @@ abstract class Interpolating[DataType, ReturnType] {
 }    */
 
 // using composition, so they can changed at runtime
+
+// TODO: sequence that is composed (->p0) should have enum
+
+class P0Enum[T](f: Context => Option[T]) extends P0[Option[T]](f) with Enumerator[Option[T]] {
+  // just pulls out the values, disregards context
+  def enum[Out](iter: Iteratee[Option[T], Out]): Iteratee[Option[T], Out] = {
+    def step(i: Iteratee[Option[T],Out]) : Iteratee[Option[T], Out] = {
+      val value = this.apply()
+      iter match {
+        case _ if value.isEmpty => iter
+        case Done(_,_) => iter
+        case c@Cont(_) => step(c(Element(value)))
+      }
+    }
+
+    step(iter)
+
+  }
+}
+
 class Sequence[Input,Intermediate,Ret](generating: Generating[Input, Intermediate],
                                        interpolating: Interpolating[Intermediate,Ret])
-  extends P1[Input, Option[Ret]]({
+  extends P1NonComposable[Input, Option[Ret]]({
     (ctx: Context, x: Input) => None
-  }) {
+  })
+  with Composable[P0[Input], P0Enum[Ret]]
+{
 
   protected class ComponentWrapper[T](private var component: T) {
     private val monitor = new Object()
@@ -101,6 +123,10 @@ class Sequence[Input,Intermediate,Ret](generating: Generating[Input, Intermediat
         case _ => None
       }
   })
+
+  def °(in: P0[Input]): P0Enum[Ret] = {
+    new P0Enum[Ret]((ctx:Context) => this.apply(ctx,in.apply(ctx)))
+  }
 }
 
 // implementations interpolation

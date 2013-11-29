@@ -1,11 +1,7 @@
-package pattern.noise
+package pattern.math
 
-import scala.util.Random
 
-import pattern.Implicits
-import Implicits._
-import pattern.P2
-import pattern.Pattern
+import pattern.{Pattern, P2}
 
 /*
   +1>>  This source code is licensed as GPLv3 if not stated otherwise.
@@ -29,27 +25,10 @@ import pattern.Pattern
     >>  Made in Bavaria by fat little elves - since 1983.
  */
 
-object WhiteNoise {
-  def generator(lo: Double, hi: Double, rnd: Random): Double = {
-    var low = lo
-    var high = hi
-
-    if (lo > hi) {high = lo; low = high}
-
-    val scale = scala.math.abs(high-low)
-    low + (rnd.nextDouble()*scale)
-  }
-
-  /*
-  def apply(lo: Double, hi: Double, rnd: Random= new Random()) : P0[Double] = {
-    val func = ( () =>  generator(lo, hi, rnd) )
-    Pattern(func)
-  }
-  */
-
+object Add {
   def apply() : P2[Double, Double, Double] = {
-    val random = new Random
-    val func = (lo: Double, hi: Double) => generator(lo, hi, random)
+    val func = (x: Double, y: Double) => x+y
+
     Pattern(func)
   }
 }

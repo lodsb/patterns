@@ -77,11 +77,11 @@ object MusicalDuration {
 
   // not sure whether this wont lead to double triggers?
   def happens(ref: MusicalTime, pt: MusicalTime, accuracy: MusicalTime) : Boolean = {
-    math.abs((ref-pt).toDouble) < accuracy.toDouble
+    scala.math.abs((ref-pt).toDouble) < accuracy.toDouble
   }
 
   def happensRepeatedly(ref: MusicalTime, pt: MusicalTime, accuracy: MusicalTime) : Boolean = {
-    math.abs(ref.toDouble % pt.toDouble) < accuracy.toDouble
+    scala.math.abs(ref.toDouble % pt.toDouble) < accuracy.toDouble
   }
 
 }

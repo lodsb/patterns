@@ -109,15 +109,8 @@ object Enumerator {
 
 object Test extends App {
 
-  @tailrec
   def enumerator[In, Out](seq: Seq[In], iter: Iteratee[In, Out]) : Iteratee[In, Out] = {
-    seq match {
-      case _ if seq.isEmpty => iter
-      case head::tail => iter match {
-        case Done(_,_) => iter
-        case c@Cont(_) => enumerator(tail, c(Element(head)))
-      }
-    }
+    Enumerator(seq, iter)
   }
 
   def print[T]: Iteratee[T, Unit] = {

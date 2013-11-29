@@ -29,7 +29,7 @@ resolvers += "Twitter repo" at "http://maven.twttr.com/"
 //    "com.twitter" %% "util-eval" % "[6.2.4,)"
 //)
 
-//libraryDependencies += "org.lodsb" %% "reakt" % "0.1-SNAPSHOT"
+libraryDependencies += "org.lodsb" %% "reakt" % "0.2-SNAPSHOT"
 
 //libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.0.3"
 

@@ -1,7 +1,7 @@
-package pattern.LFO
+package pattern.lfo
 
 import pattern.{Pattern, Context, MusicalDuration}
-import util.Random
+import scala.util.Random
 
 /*
   +1>>  This source code is licensed as GPLv3 if not stated otherwise.
@@ -39,7 +39,8 @@ object SyncedLFO {
     val RandomSH = Value("TRI")
   }
 
-  def generator(ctx: Context, speed: MusicalDuration, phase: Double, waveform: Waveform.Value) : Double = {
+  //TODO: Reset
+  def generator(ctx: Context, speed: MusicalDuration, phase: Double, waveform: Waveform.Value, reset: Boolean) : Double = {
     val timeFactor = duration.toDouble/speed.toDouble
 
     //fixed speed phasor
@@ -48,7 +49,13 @@ object SyncedLFO {
 
     // update current phase
     var currentPhase : Double = ctx.state("currentPhase", 0.0)
-    currentPhase = (currentPhase + timeFactor) % 1.0
+
+    if (!reset) {
+      currentPhase = (currentPhase + timeFactor) % 1.0
+    } else {
+      currentPhase = 0.0;
+    }
+
     ctx.state.save("currentPhase", currentPhase)
 
     currentPhase = currentPhase + phase

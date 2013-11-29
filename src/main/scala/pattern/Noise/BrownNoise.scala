@@ -1,6 +1,6 @@
-package pattern.Noise
+package pattern.noise
 
-import util.Random
+import scala.util.Random
 import pattern.{Pattern, P2}
 
 /*
