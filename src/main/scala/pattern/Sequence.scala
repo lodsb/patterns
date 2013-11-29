@@ -199,17 +199,17 @@ class Repetition[A](container: P0[A], repetitions: P0[Int]) extends Generating[P
   }
 }
 
-class WrappedSequence[A](seq: P0[Seq[A]], deviation: P0[Int]) extends Generating[P0[A], A] {
+class WrappedSequence[B,A <: Seq[B]](seq: P0[A], deviation: P0[Int]) extends Generating[P0[A], B] {
   private var currentIndex = 0;
 
   def reset {
     currentIndex = 0
   }
 
-  def enum[Out](iter: Iteratee[A, Out]): Iteratee[A, Out] = {
+  def enum[Out](iter: Iteratee[B, Out]): Iteratee[B, Out] = {
     val currentSequence = seq()
 
-    def step(i: Iteratee[A, Out]) : Iteratee[A, Out] = {
+    def step(i: Iteratee[B, Out]) : Iteratee[B, Out] = {
       iter match {
         case Done(_,_) => iter
         case c@Cont(_) => {
@@ -242,13 +242,12 @@ class WrappedSequence[A](seq: P0[Seq[A]], deviation: P0[Int]) extends Generating
   * convenience functions for quick instantiation
   */
 object Sequence {
-  def apply[T](pseq: P0[Seq[T]]) : Sequence[Seq[T],T,T] = {
-    import Implicits._
-    import Pattern._
-    val deviator = Pattern(1)
+  import Pattern._
 
-    new Sequence(new WrappedSequence[T](pseq, deviator), new NoInterpolation[T])
+  def apply[T](pseq: P0[Seq[T]], deviator: P0[Int]= Pattern(1)) : Sequence[P0[Seq[T]],T,T] = {
+    new Sequence(new WrappedSequence(pseq, deviator), new NoInterpolation[T])
   }
+
 }
 
 
